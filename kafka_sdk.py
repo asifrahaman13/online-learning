@@ -1,9 +1,26 @@
 import csv
+import os
+import csv
+
 # Import the required packages and libraries.
 from kafka import KafkaProducer
 from confluent_kafka import Consumer, KafkaError
 import time
 from src.model_creation import train_model
+
+import pandas as pd
+
+
+def count_rows_in_csv(file_path="service_pricing_data.csv"):
+
+    try:
+        df = pd.read_csv(file_path)
+        total_rows = len(df)
+        return total_rows
+    except FileNotFoundError:
+        return "File not found"
+    except pd.errors.EmptyDataError:
+        return "File is empty"
 
 
 # Logger class to log the request and response.
@@ -32,18 +49,29 @@ class CsvFile:
 
     def __init__(self, file_path):
         self.file_path = file_path
+        self.file_exists = os.path.exists(file_path)
 
-    def append_to_csv(
-        self, demand, cost, price, recession, economy, competition, market_size
-    ):
+    def append_to_csv(self, demand, cost, price, recession, economy, competition, market_size):
         with open(self.file_path, mode="a", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(
-                [demand, cost, price, str(recession), economy, competition, market_size]
-            )
+            if not self.file_exists:
+                writer.writerow(
+                    [
+                        "Demand",
+                        "Cost",
+                        "Price",
+                        "Recession",
+                        "Economy",
+                        "Competition",
+                        "Market Size",
+                    ]
+                )
+                self.file_exists = True
+            writer.writerow([demand, cost, price, recession, economy, competition, market_size])
+
+            # TrafficProcessingSDK class to process the request and consume from Kafka.
 
 
-# TrafficProcessingSDK class to process the request and consume from Kafka.
 class TrafficProcessingSDK:
     """Initialize the TrafficProcessingSDK class with the Kafka bootstrap servers and group id."""
 
@@ -81,9 +109,6 @@ class TrafficProcessingSDK:
             print(msg.value().decode("utf-8"))
             msg_str = msg.value().decode("utf-8")
             msg_dict = json.loads(msg_str)
-            print(type(msg_dict))
-            print(msg_dict)
-            print(msg_dict["Demand"])
 
             csv_operation = CsvFile("service_pricing_data.csv")
 
@@ -95,12 +120,13 @@ class TrafficProcessingSDK:
             competition = msg_dict["Competition"]
             market_size = msg_dict["Market_Size"]
 
-            csv_operation.append_to_csv(
-                demand, cost, price, recession, economy, competition, market_size
-            )
+            csv_operation.append_to_csv(demand, cost, price, recession, economy, competition, market_size)
             print("Received message: {}".format(msg.value().decode("utf-8")))
 
-            train_model()
+            total_rows = count_rows_in_csv()
+
+            if total_rows % 5 == 0:
+                train_model()
 
         try:
             while True:
@@ -126,7 +152,6 @@ if __name__ == "__main__":
     sdk = TrafficProcessingSDK(kafka_bootstrap_servers, group_id)
 
     while True:
-        url = input("Enter the server URL: ")
         url = "http://localhost:8000"
         data = {
             "Demand": 152,

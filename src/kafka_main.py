@@ -1,21 +1,19 @@
+# Import all the packages and modules required for the FastAPI server.
 from fastapi import FastAPI, Request, Response
 from kafka import KafkaProducer
-import json
-# Import all the packages and modules required for the FastAPI server.
-from src.kafka_sdk import (
-    TrafficProcessingSDK,
-)
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
-from fastapi import FastAPI, Request
 from fastapi import FastAPI, Request
 from starlette.concurrency import iterate_in_threadpool
+import json
+from kafka_sdk import (
+    TrafficProcessingSDK,
+)
 
 
 app = FastAPI()
 
-producer = KafkaProducer(bootstrap_servers='localhost:9092')
+producer = KafkaProducer(bootstrap_servers="localhost:9092")
 
 
 import json
@@ -42,10 +40,12 @@ kafka_bootstrap_servers = "localhost:9092"
 group_id = "traffic-processing-group"
 sdk = TrafficProcessingSDK(kafka_bootstrap_servers, group_id)
 
+
 @app.middleware("http")
 async def some_middleware(request: Request, call_next):
     # Read the request body
     body_bytes = await request.body()
+    response = await call_next(request)
 
     # Decode the bytes into a string
     body_str = body_bytes.decode()
@@ -54,22 +54,18 @@ async def some_middleware(request: Request, call_next):
     body_dict = json.loads(body_str)
 
     # Log the dictionary
-    print("Received JSON:", body_dict)
 
-    # Process the request
-    sdk.process_request(request.url.path, request.method, body_dict)
+    # Log the dictionary only if the request path matches a specific route
+    if request.url.path == "/items":
+        print("Received JSON:", body_dict)
 
-    # Call the next middleware in the chain
-    response = await call_next(request)
+        # Call the next middleware in the chain
+        # Process the request
+        sdk.process_request(request.url.path, request.method, body_dict)
 
     return response
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
 @app.post("/items")
 async def create_item(item: dict):
-    return item
+    return {"The data saved successfully": item}

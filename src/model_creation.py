@@ -1,4 +1,7 @@
 import torch
+
+print(torch.__version__)
+
 import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
@@ -23,7 +26,9 @@ class PricePredictor(nn.Module):
 
 def train_model():
     # Load the dataset
-    data = pd.read_csv("/media/asifr/work/ml_project/backend/src/service_pricing_data.csv")
+    data = pd.read_csv("service_pricing_data.csv")
+
+    print(data.head())
 
     # Preprocessing
     # Encode categorical variables
@@ -34,16 +39,12 @@ def train_model():
 
     # Scale numerical variables
     scaler = StandardScaler()
-    data[["Demand", "Cost", "Market Size"]] = scaler.fit_transform(
-        data[["Demand", "Cost", "Market Size"]]
-    )
+    data[["Demand", "Cost", "Market Size"]] = scaler.fit_transform(data[["Demand", "Cost", "Market Size"]])
 
     # Split the dataset into training and testing sets
     X = data.drop("Price", axis=1)
     y = data["Price"]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Convert data to PyTorch tensors
     X_train_tensor = torch.tensor(X_train.values, dtype=torch.float32)
@@ -57,7 +58,7 @@ def train_model():
     # Create an instance of the model
     model = PricePredictor(input_dim)
 
-    def train_model():
+    def train_model_():
 
         # Define loss function and optimizer
         criterion = nn.MSELoss()
@@ -79,7 +80,7 @@ def train_model():
                 print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}")
 
         # Save the trained model
-        torch.save(model.state_dict(), "/media/asifr/work/ml_project/backend/src/price_predictor_model.pth")
+        torch.save(model.state_dict(), "price_predictor_model.pth")
 
         # Evaluate the model
         model.eval()
@@ -88,18 +89,20 @@ def train_model():
             test_loss = criterion(y_pred, y_test_tensor)
             print(f"Test Loss: {test_loss.item():.4f}")
 
-    count = 0
-    while True:
+    train_model_()
 
-        count = count + 1
-        # if count == 3:
-        #     break
-        print("First training model......")
-        import time
+    # count = 0
+    # while True:
 
-        train_model()
-        time.sleep(10)
+    #     count = count + 1
+    #     # if count == 3:
+    #     #     break
+    #     print("First training model......")
+    #     import time
+
+    #     train_model_()
+    #     time.sleep(10)
 
 
-if __name__ == "__main__":
-    train_model()
+# if __name__ == "__main__":
+#     train_model()
