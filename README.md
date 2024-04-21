@@ -1,5 +1,13 @@
 # About the application.
 
+
+The application can consume data using kafka and create models out of it.
+![Alt text](train.png)
+
+
+API is used to make predictions.
+![Alt text](prediction.png)
+
 ## Run the kafka server
 
 Make sure you run your kafka application, zookeeper etc
@@ -25,7 +33,7 @@ bin/kafka-topics.sh --create --topic web-logs --bootstrap-server localhost:9092 
 # Clone the repository
 
 ```bash
-git clone http://github.com/asifrhaman13/ml_project
+git clone https://github.com/asifrahaman13/online-learning.git 
 ```
 
 Create virtual environment.
@@ -78,7 +86,7 @@ uvicorn src.main:app --reload --port=5000
 
 
 ### Enter the sample data to train
-```http
+```bash
 http://127.0.0.1:8000/items/
 ```
 
@@ -100,7 +108,7 @@ Body:
 ### Predict the output
 URL:
 
-```http
+```bash
 http://127.0.0.1:5000/predict/
 ```
 
@@ -114,3 +122,4 @@ http://127.0.0.1:5000/predict/
   "Market_Size": [500, 1000, 1500]
 }
 ```
+
