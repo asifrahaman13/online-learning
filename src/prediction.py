@@ -5,58 +5,104 @@ from src.model_creation import PricePredictor
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import numpy as np
+import torch
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from model_va import PricePredictor
+
+# Load the trained model
+model = PricePredictor(6)
+model.load_state_dict(torch.load("price_predictor_model.pth"))
+model.eval()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def predict_output(cost, demand, recession, economy, competition, market_size):
-    # Scale numerical variables
-    scaler = StandardScaler()
+    print(cost, demand, recession, economy, competition, market_size)
+    # cost, demand, recession, economy, competition, market_size=cost[0], demand[0], recession[0], economy[0], competition[0], market_size[0]
 
-    # Assuming X_new is a pandas DataFrame containing new input data for prediction
-    # Preprocess the new input data
-    encoder_recession = LabelEncoder()
-    encoder_recession.classes_ = np.array(["False", "True"])  # Set the categories explicitly
+    # Preprocess the input data
+    input_data = {
+        "Demand": [demand, 4784, 1500, 2500, 3500, 2000, 4200, 1800, 3000, 2700],
+        "Cost": [cost, 2486, 700, 1200, 1800, 900, 2000, 800, 1500, 1300],
+        "Recession": [
+            recession,
+            True,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            True,
+            False,
+        ],
+        "Economy": [
+            economy,
+            "Medium",
+            "Strong",
+            "Strong",
+            "Medium",
+            "Weak",
+            "Strong",
+            "Medium",
+            "Weak",
+            "Strong",
+        ],
+        "Competition": [
+            competition,
+            "Low",
+            "Low",
+            "High",
+            "Medium",
+            "High",
+            "Low",
+            "Medium",
+            "High",
+            "Low",
+        ],
+        "Market Size": [
+            market_size,
+            3502,
+            8000,
+            12000,
+            15000,
+            9000,
+            18000,
+            7000,
+            14000,
+            10000,
+        ],
+    }
+    input_df = pd.DataFrame(input_data)
 
-    # Preprocessing
-    # Encode categorical variables
     encoder = LabelEncoder()
+    input_df["Recession"] = encoder.fit_transform(input_df["Recession"])
+    input_df["Economy"] = encoder.fit_transform(input_df["Economy"])
+    input_df["Competition"] = encoder.fit_transform(input_df["Competition"])
 
-    # Load the saved model for prediction
-    model = PricePredictor(6)
-    model.load_state_dict(torch.load("price_predictor_model.pth"))
-    model.eval()
-
-    # Assuming X_new is a pandas DataFrame containing new input data for prediction
-    # Preprocess the new input data
-    X_new = pd.DataFrame(
-        {
-            "Demand": demand,
-            "Cost": cost,
-            "Recession": recession,
-            "Economy": economy,
-            "Competition": competition,
-            "Market Size": market_size,
-        }
+    scaler = StandardScaler()
+    input_df[["Demand", "Cost", "Market Size"]] = scaler.fit_transform(
+        input_df[["Demand", "Cost", "Market Size"]]
     )
-    X_new["Recession"] = encoder_recession.fit_transform(X_new["Recession"])
 
-    # Assuming X_new is a pandas DataFrame containing new input data for prediction
-    # Preprocess the new input data
-    encoder_economy = LabelEncoder()
-    encoder_economy.classes_ = np.array(["Strong", "Moderate", "Weak"])  # Set the categories explicitly
-    X_new["Economy"] = encoder_economy.fit_transform(X_new["Economy"])
-    X_new["Competition"] = encoder.fit_transform(X_new["Competition"])
-    X_new[["Demand", "Cost", "Market Size"]] = scaler.fit_transform(X_new[["Demand", "Cost", "Market Size"]])
-    X_new_tensor = torch.tensor(X_new.values, dtype=torch.float32)
+    # Convert input data to PyTorch tensor
+    input_tensor = torch.tensor(input_df.values, dtype=torch.float32)
 
-    # Make predictions using the loaded model
+    # Get the predicted prices
     with torch.no_grad():
-        y_pred = model(X_new_tensor)
+        predicted_prices = model(input_tensor).cpu().numpy().flatten()
+    prediction = 0
+    # Print the predicted prices
+    for i, price in enumerate(predicted_prices):
+        print(f"Predicted price for sample {i + 1}: {price:.4f}")
+        print(type(price))
+        # return price
+        prediction = int(price)
+        return prediction
+        # prediction= price:.4f
 
-    # Convert predictions to a numpy array
-    predictions = y_pred.numpy()
+    return prediction
 
-    # Print the predictions
-    print("Predictions:")
-    print(predictions)
 
-    return predictions.tolist()
+predict_output(2959, 3986, True, "Weak", "High", 3500)

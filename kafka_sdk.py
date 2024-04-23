@@ -51,7 +51,9 @@ class CsvFile:
         self.file_path = file_path
         self.file_exists = os.path.exists(file_path)
 
-    def append_to_csv(self, demand, cost, price, recession, economy, competition, market_size):
+    def append_to_csv(
+        self, demand, cost, price, recession, economy, competition, market_size
+    ):
         with open(self.file_path, mode="a", newline="") as file:
             writer = csv.writer(file)
             if not self.file_exists:
@@ -67,7 +69,9 @@ class CsvFile:
                     ]
                 )
                 self.file_exists = True
-            writer.writerow([demand, cost, price, recession, economy, competition, market_size])
+            writer.writerow(
+                [demand, cost, price, recession, economy, competition, market_size]
+            )
 
             # TrafficProcessingSDK class to process the request and consume from Kafka.
 
@@ -120,7 +124,9 @@ class TrafficProcessingSDK:
             competition = msg_dict["Competition"]
             market_size = msg_dict["Market_Size"]
 
-            csv_operation.append_to_csv(demand, cost, price, recession, economy, competition, market_size)
+            csv_operation.append_to_csv(
+                demand, cost, price, recession, economy, competition, market_size
+            )
             print("Received message: {}".format(msg.value().decode("utf-8")))
 
             total_rows = count_rows_in_csv()

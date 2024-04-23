@@ -5,12 +5,12 @@ from pydantic import BaseModel
 
 
 class InputData(BaseModel):
-    Demand: List[int]
-    Cost: List[int]
-    Recession: List[str]
-    Economy: List[str]
-    Competition: List[str]
-    Market_Size: List[int]
+    Demand: int
+    Cost: int
+    Recession: bool
+    Economy: str
+    Competition: str
+    Market_Size: int
 
 
 app = FastAPI()
